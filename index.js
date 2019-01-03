@@ -9,6 +9,7 @@ app.use(bodyParser.json())
 var auth = require('./auth/auth')
 app.use('/auth/auth', (req, res) => {
   const { credentials } = req.body
+  alert(" Data passed : " + credentials)
   console.log(" Data passed : " + credentials);
 })
 
@@ -19,5 +20,5 @@ app.get('/*', (req, res) => {
 const PORT = process.env.PORT || 3200
 
 http.listen(PORT, () => {
-  console.log('Connected to port ' + PORT)
+  alert('Connected to port ' + PORT)
 })
