@@ -20,6 +20,8 @@ app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'))
 })  
 
+io.on('connection', SocketManager)
+
 const PORT = process.env.PORT || 3200
 
 http.listen(PORT, () => {
