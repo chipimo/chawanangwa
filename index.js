@@ -19,7 +19,7 @@ app.use('/auth/auth', (req, res) => {
 app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'))
 })  
-
+const SocketManager = require('./SocketManager')
 io.on('connection', SocketManager)
 
 const PORT = process.env.PORT || 3200
