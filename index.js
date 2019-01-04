@@ -8,7 +8,7 @@ app.use(bodyParser.json())
 
 var auth = require('./auth/auth')
 app.use('/auth/auth', (req, res) => {
-  res.status(400).json({
+  res.json({
     errors: {
       msgHeader: 'Hello ',
       global: 'You have supplied invalid credentials'
