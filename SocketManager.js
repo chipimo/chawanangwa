@@ -8,7 +8,7 @@ module.exports = function(socket) {
   
   socket.on("connect", user => {
     user.socketId = socket.id;
-    io.emit('connected-device', socket.id)
+    // io.emit(DEVICE_ID, socket.id)
   });
 
 };

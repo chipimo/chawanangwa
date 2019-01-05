@@ -8,17 +8,15 @@ app.use(bodyParser.json())
 
 var auth = require('./auth/auth')
 app.use('/auth/auth', (req, res) => {
+  const { credentials } = req.body
   res.json({
-    errors: {
-      msgHeader: 'Hello ',
-      global: 'You have supplied invalid credentials'
-    }
+    credentials
   })
 })
 
 app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'))
-})  
+})
 const SocketManager = require('./SocketManager')
 io.on('connection', SocketManager)
 
