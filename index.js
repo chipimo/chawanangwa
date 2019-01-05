@@ -10,7 +10,8 @@ var auth = require('./auth/auth')
 app.use('/auth/auth', (req, res) => {
   const { credentials } = req.body
   res.json({
-    credentials
+    Username: credentials.Username,
+    Password: credentials.Password,
   })
 })
 
