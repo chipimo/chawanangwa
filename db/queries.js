@@ -1,4 +1,4 @@
-const knex = require("./knex"); // the connection!
+const knex = require("../knex"); // the connection!
 const uuidv4 = require("uuid/v4");
 
 function CreateId() {
