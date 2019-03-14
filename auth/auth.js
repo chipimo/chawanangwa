@@ -1,11 +1,8 @@
-var express = require('express')
 
-const router = express.Router()
+function Auth(params, callback) {
+    if (params.key === 'chawanangwaFarms1302019v@1.0.0') {
+        
+    }
+}
 
-router.post('/', (req, res) => {
-    const { credentials } = req.body
-    console.log(" Data passed : "+credentials);
-
-})
-
-module.exports = router
+module.exports = { Auth }
