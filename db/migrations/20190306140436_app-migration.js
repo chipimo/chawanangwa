@@ -50,10 +50,23 @@ exports.up = function(knex, Promise) {
         .integer("user_id")
         .references("id")
         .inTable("subscribers");
-      table.string("week").notNullable();
-      table.string("month").notNullable();
-      table.integer("number_of_weeks").notNullable();
-      table.integer("number_of_months").notNullable();
+      table.integer("ActiveYear").notNullable();
+      table.integer("ActiveMonth").notNullable();
+      table.integer("NextYear").notNullable();
+      table.integer("NextMonth").notNullable();
+      table.timestamp("created_at").defaultTo(knex.fn.now());
+      table.timestamp("updated_at").defaultTo(knex.fn.now());
+    })
+    .createTable("products", function(table) {
+      table.increments("id");
+      table.string("product_id").notNullable();
+      table.string("name").notNullable();
+      table.text("description").notNullable();
+      table.string("product_price_default").notNullable();
+      table.string("product_price_discount").notNullable();
+      table.text("image").notNullable();
+      table.boolean("is_subscribable").notNullable();
+      table.boolean("is_active").notNullable();
       table.timestamp("created_at").defaultTo(knex.fn.now());
       table.timestamp("updated_at").defaultTo(knex.fn.now());
     })
@@ -79,5 +92,6 @@ exports.down = function(knex, Promise) {
     .dropTable("subscriptions")
     .dropTable("nonsubscribers")
     .dropTable("payment_details")
+    .dropTable("products")
     .dropTable("subscribers");
 };
