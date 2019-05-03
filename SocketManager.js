@@ -18,7 +18,9 @@ const {
   PRODUCT_REMOVE_ERR,
   PRODUCTS_RESULTS_ERR,
   PRODUCT_UPDATE,
-  PRODUCT_UPDATE_DONE,NEW_BUNDLE
+  PRODUCT_UPDATE_DONE,
+  NEW_BUNDLE,
+  BUNDLE_CREATED
 } = require("./events");
 const {
   _putNewUser,
@@ -26,8 +28,20 @@ const {
   _putNewProudct,
   _getProudct,
   _removeItem,
-  _update
+  _update,
+  _putNewNewBundle
 } = require("./db/queries");
+var cloudinary = require("cloudinary").v2;
+var base64Img = require("base64-img");
+require("custom-env").env();
+
+var ProductList = {};
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET
+});
 
 module.exports = function(socket) {
   socket.on("connected", () => {
@@ -40,7 +54,10 @@ module.exports = function(socket) {
   });
 
   socket.on(NEW_BUNDLE, resData => {
-    console.log(resData);
+    _putNewNewBundle(resData, callback => {
+      console.log(callback);
+      io.emit(BUNDLE_CREATED, callback);
+    });
   });
 
   socket.on(USER_CONNECTED, user => {
@@ -72,19 +89,35 @@ module.exports = function(socket) {
   });
 
   socket.on(PRODUCT_ENTRY, data => {
-    let productData = {
-      data: data,
-      socketId: socket.id
-    };
-    _putNewProudct(productData, callback => {
-      io.to(callback.socketId).emit(PRODUCT_ENTRY_DONE, callback.productData);
-      io.emit(NEW_PROUDCT, {
-        id: {
-          name: callback.productData.name,
-          id: callback.productData.product_id
-        }
-      });
-    });
+    base64Img.img(
+      "data:image/png;base64," + data.image + "",
+      "./temFiles",
+      "temp",
+      function(err, filepath) {
+        cloudinary.uploader.upload(filepath, function(error, result) {
+          let productData = {
+            data: data,
+            socketId: socket.id,
+            img: {
+              url: result.url,
+              secure_url: result.secure_url,
+              format: result.format,
+              public_id: result.public_id
+            }
+          };
+          _putNewProudct(productData, callback => {
+            ProductList = callback.productData;
+            io.to(callback.socketId).emit(
+              PRODUCT_ENTRY_DONE,
+              callback.productData
+            );
+            io.emit(NEW_PROUDCT, {
+              id: callback.productData
+            });
+          });
+        });
+      }
+    );
   });
 
   socket.on(PRODUCT_UPDATE, data => {
@@ -106,26 +139,30 @@ module.exports = function(socket) {
       socketId: socket.id
     };
 
-    _getProudct(productData, callback => {
-      if (callback.Error) {
-        io.to(callback.socketId).emit(PRODUCTS_RESULTS_ERR);
-      } else {
-        io.to(callback.socketId).emit(PRODUCTS_RESULTS, callback.productData);
-      }
-    });
+    if (Object.keys(ProductList).length === 0) {
+      _getProudct(productData, callback => {
+        if (callback.Error) {
+          io.to(callback.socketId).emit(PRODUCTS_RESULTS_ERR);
+        } else {
+          ProductList = callback.productData;
+          io.to(callback.socketId).emit(PRODUCTS_RESULTS, callback.productData);
+        }
+      });
+    } else {
+      io.to(socket.id).emit(PRODUCTS_RESULTS, ProductList);
+    }
   });
 
   socket.on(DELETE_ITEM, data => {
-    let productData = {
-      data: "all",
-      socketId: socket.id
-    };
-    _removeItem(data, callback => {
-      if (callback.Error) {
-        return io.emit(PRODUCT_REMOVE_ERR);
-      } else {
-        io.emit(PRODUCT_REMOVED, callback.Data);
-      }
+    cloudinary.uploader.destroy(data.public_id, function(error, result) {
+      console.log(result, error);
+      _removeItem(data.Productid, callback => {
+        if (callback.Error) {
+          return io.emit(PRODUCT_REMOVE_ERR);
+        } else {
+          io.emit(PRODUCT_REMOVED, callback.Data);
+        }
+      });
     });
   });
 

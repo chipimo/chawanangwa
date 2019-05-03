@@ -46,14 +46,7 @@ exports.up = function(knex, Promise) {
     })
     .createTable("subscriptions", function(table) {
       table.increments("id");
-      table
-        .integer("user_id")
-        .references("id")
-        .inTable("subscribers");
-      table.integer("ActiveYear").notNullable();
-      table.integer("ActiveMonth").notNullable();
-      table.integer("NextYear").notNullable();
-      table.integer("NextMonth").notNullable();
+      table.jsonb("contener").notNullable();
       table.timestamp("created_at").defaultTo(knex.fn.now());
       table.timestamp("updated_at").defaultTo(knex.fn.now());
     })
@@ -65,6 +58,10 @@ exports.up = function(knex, Promise) {
       table.string("product_price_default").notNullable();
       table.string("product_price_discount").notNullable();
       table.text("image").notNullable();
+      table.string("public_id").notNullable();
+      table.string("format").notNullable();
+      table.text("ImgUrl").notNullable();
+      table.text("secure_url").notNullable();
       table.boolean("is_subscribable").notNullable();
       table.boolean("is_active").notNullable();
       table.timestamp("created_at").defaultTo(knex.fn.now());

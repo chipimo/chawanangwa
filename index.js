@@ -7,9 +7,9 @@ var axios = require("axios");
 
 app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
-});
+}); 
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 const SocketManager = require("./SocketManager");
 io.on("connection", SocketManager);

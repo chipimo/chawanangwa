@@ -8,13 +8,13 @@ function CreateId() {
 module.exports = {
   _getAllUsers() {},
   _getUser_ById(user_id, callback) {},
-  
+
   _getUser_ByUserName(user_credentials, callback) {
-    knex 
+    knex
       .select()
       .from("nonsubscribers")
       .where("user_name", user_credentials.user.username)
-      .then(function(user) {
+      .then(function(user) { 
         if (user.length === 0) {
           callback({
             isSet: false,
@@ -49,10 +49,10 @@ module.exports = {
       .catch(err => {
         callback({ Error: true });
       });
-  },
-
-  _getProudct(productData, callback) {
-    knex
+    },
+    
+    _getProudct(productData, callback) {
+      knex
       .select()
       .from("products")
       .then(function(product) {
@@ -75,7 +75,11 @@ module.exports = {
         description: data.data.descripion,
         product_price_default: data.data.price,
         product_price_discount: 0.0,
-        image: data.data.image,
+        image: data.img.url,
+        public_id: data.img.public_id,
+        format: data.img.format,
+        ImgUrl: data.img.url,
+        secure_url: data.img.secure_url,
         is_subscribable: data.data.subscribable,
         is_active: data.data.isActive
       })
@@ -83,7 +87,6 @@ module.exports = {
         knex
           .select()
           .from("products")
-          .where("product_id", productId)
           .then(function(product) {
             callback({
               socketId: data.socketId,
@@ -92,6 +95,60 @@ module.exports = {
           });
       });
   },
+
+  _putNewNewBundle(data, callback) {
+    knex
+      .select()
+      .from("subscriptions")
+      .then(function(Bundle) {
+        if (Bundle.length === 0) {
+          knex("subscriptions")
+            .insert({
+              contener: { main: data.contener }
+            })
+            .then(function() {
+              knex
+                .select()
+                .from("subscriptions")
+                .then(function(Bundle) {
+                  callback({
+                    // socketId: BundleData.socketId,
+                    BundleData: { Bundle }
+                  });
+                })
+                .catch(err => {
+                  callback({ Error: true });
+                });
+            });
+        } else {
+          knex("subscriptions")
+            .update({
+              contener: knex.raw(`jsonb_set(??, '{main}', ?)`, [
+                "contener",
+                { main: data.contener }
+              ])
+            })
+            .then(function() {
+              knex
+                .select()
+                .from("subscriptions")
+                .then(function(Bundle) {
+                  callback({
+                    // socketId: BundleData.socketId,
+                    BundleData: { Bundle }
+                  });
+                })
+                .catch(err => {
+                  callback({ Error: true });
+                });
+            });
+        }
+      })
+      .catch(err => {
+        callback({ Error: true });
+      });
+  },
+
   _putNewUser(user_credentials, callback) {
     let userId = CreateId();
     knex("nonsubscribers")
@@ -123,23 +180,27 @@ module.exports = {
           .select()
           .from("products")
           .then(function(removed) {
-            callback({ Error: false, Data: removed });
+            callback({ Error: false, Data: {removed} });
           });
       })
       .catch(err => {
         callback({ Error: true });
       });
-  },
+  }, 
 
   _update(id, callback) {
+
     if (id.data.isImageChaged) {
       knex("products")
         .where("product_id", id.data.id)
         .update({
           name: id.data.name,
           description: id.data.descripion,
-          image: id.data.image,
-          updated_at: knex.fn.now()
+          image: id.img.url,
+          product_price_discount: id.data.discount,
+          product_price_default: id.data.price,
+          is_subscribable: id.data.isSub,
+          updated_at: id.data.updated_at
         })
         .then(function() {
           knex
@@ -154,12 +215,15 @@ module.exports = {
         });
     } else {
       knex("products")
-        .where("id", id.data.id)
+        .where("product_id", id.data.id)
         .update({
           name: id.data.name,
           description: id.data.descripion,
-          updated_at: knex.fn.now()
-        })   
+          product_price_discount: id.data.discount,
+          product_price_default: id.data.price,
+          is_subscribable: id.data.isSub,
+          updated_at: id.data.updated_at
+        })
         .then(function() {
           knex
             .select()
