@@ -3,11 +3,19 @@ var app = express();
 var http = require("http").Server(app);
 var io = (module.exports.io = require("socket.io")(http));
 var path = require("path");
-var axios = require("axios");
+var bodyParser = require("body-parser");
+
+var UploadPic = require("./routes/UploadPic");
+
+require("custom-env").env();
+
+app.use(bodyParser.json());
 
 app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
-}); 
+});
+
+app.use("/auth/pic", UploadPic);
 
 app.use(express.static(path.join(__dirname, "public")));
 

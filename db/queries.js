@@ -1,20 +1,57 @@
 const knex = require("../knex"); // the connection!
 const uuidv4 = require("uuid/v4");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+const myPlaintextPassword = "s0//P4$$w0rD";
 
 function CreateId() {
   return uuidv4();
 }
 
 module.exports = {
-  _getAllUsers() {},
-  _getUser_ById(user_id, callback) {},
+  _getAllUsers(socketId, callback) {
+    knex
+      .select()
+      .from("users")
+      .then(function(users) {
+        callback({
+          Error: false,
+          socketId: socketId,
+          Users: { users }
+        });
+      })
+      .catch(err => {
+        callback({ Error: true, msg: err });
+      });
+  },
+  _getUser_ById(user_credentials, callback) {
+    knex
+      .select()
+      .from("users")
+      .where("user_id", user_credentials.user.id)
+      .then(function(user) {
+        if (user.length === 0) {
+          callback({
+            isSet: false,
+            socketId: user_credentials.socketId,
+            userData: { isRegistered: false, credentials: user }
+          });
+        } else {
+          callback({
+            isSet: true,
+            socketId: user_credentials.socketId,
+            userData: { isRegistered: true, credentials: user }
+          });
+        }
+      });
+  },
 
   _getUser_ByUserName(user_credentials, callback) {
     knex
       .select()
-      .from("nonsubscribers")
-      .where("user_name", user_credentials.user.username)
-      .then(function(user) { 
+      .from("users")
+      .where("email", user_credentials.user.email)
+      .then(function(user) {
         if (user.length === 0) {
           callback({
             isSet: false,
@@ -49,10 +86,10 @@ module.exports = {
       .catch(err => {
         callback({ Error: true });
       });
-    },
-    
-    _getProudct(productData, callback) {
-      knex
+  },
+
+  _getProudct(productData, callback) {
+    knex
       .select()
       .from("products")
       .then(function(product) {
@@ -150,27 +187,87 @@ module.exports = {
   },
 
   _putNewUser(user_credentials, callback) {
-    let userId = CreateId();
-    knex("nonsubscribers")
-      .insert({
-        user_name: user_credentials.user.fname,
-        user_id: userId,
-        email: user_credentials.user.email,
-        password: user_credentials.user.password
+    knex
+      .select()
+      .from("users")
+      .where("email", user_credentials.email)
+      .then(function(user) {
+        if (user.length === 0) {
+          let userId = CreateId();
+          bcrypt.genSalt(saltRounds, function(err, salt) {
+            bcrypt.hash(user_credentials.password, salt, function(err, hash) {
+              knex("users")
+                .insert({
+                  user_name: user_credentials.name,
+                  user_id: user_credentials.id ? user_credentials.id : userId,
+                  email: user_credentials.email,
+                  Fname: "",
+                  Lname: "",
+                  Password: hash,
+                  Residential_address: "",
+                  Residential_features: "",
+                  Residential_Image: "",
+                  Call_Number: "",
+                  Call_Number_whatsapp: "",
+                  NRC_Number: "",
+                  Location: {},
+                  Profile_pic: user_credentials.withImg
+                    ? user_credentials.img
+                    : {},
+                  Messages: {},
+                  Subscriptions: {},
+                  Purchases: {},
+                  isSubscriber: false,
+                  SubscriptionPlan: ""
+                })
+                .then(function() {
+                  knex
+                    .select()
+                    .from("users")
+                    .where(
+                      "user_id",
+                      user_credentials.id ? user_credentials.id : userId
+                    )
+                    .then(function(user) {
+                      callback({
+                        socketId: user_credentials.socketId,
+                        userData: { isRegistered: true, credentials: user },
+                        exists: false
+                      });
+                    });
+                });
+            });
+          });
+        } else {
+          callback({
+            socketId: user_credentials.socketId,
+            userData: {},
+            exists: true
+          });
+        }
+      });
+  },
+
+  _updateUserProfile(data, callback) {
+    knex("users")
+      .where("user_id", data.token)
+      .update({
+        Profile_pic: data.result
       })
       .then(function() {
         knex
           .select()
-          .from("nonsubscribers")
-          .where("user_id", userId)
+          .from("users")
+          .where("user_id", data.token)
           .then(function(user) {
             callback({
-              socketId: user_credentials.socketId,
-              userData: { isRegistered: true, credentials: user }
+              userData: { isRegistered: true, credentials: user },
+              exists: false
             });
           });
       });
   },
+
   _removeItem(id, callback) {
     knex("products")
       .where("product_id", id)
@@ -180,16 +277,15 @@ module.exports = {
           .select()
           .from("products")
           .then(function(removed) {
-            callback({ Error: false, Data: {removed} });
+            callback({ Error: false, Data: { removed } });
           });
       })
       .catch(err => {
         callback({ Error: true });
       });
-  }, 
+  },
 
   _update(id, callback) {
-
     if (id.data.isImageChaged) {
       knex("products")
         .where("product_id", id.data.id)
