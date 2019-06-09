@@ -131,7 +131,7 @@ module.exports = function(socket) {
       //     }
       //   });
       //   if (Users.length === num) {
-      // console.log(NewArr); 
+      // console.log(NewArr);  
 
       io.to(callback.socketId).emit(ALL_USERS, callback);
       //   }

@@ -288,7 +288,7 @@ module.exports = {
   _update(id, callback) {
     if (id.data.isImageChaged) {
       knex("products")
-        .where("product_id", id.data.id) 
+        .where("product_id", id.data.id)  
         .update({
           name: id.data.name,
           description: id.data.descripion,

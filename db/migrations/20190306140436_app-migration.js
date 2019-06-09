@@ -20,7 +20,7 @@ exports.up = function(knex, Promise) {
       table.jsonb("Subscriptions").notNullable();
       table.jsonb("Purchases").notNullable();
       table.boolean("isSubscriber").notNullable();
-      table.string("SubscriptionPlan").notNullable(); 
+      table.string("SubscriptionPlan").notNullable();  
       table.timestamp("created_at").defaultTo(knex.fn.now());
       table.timestamp("updated_at").defaultTo(knex.fn.now());
     })
